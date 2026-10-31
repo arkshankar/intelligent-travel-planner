@@ -24,11 +24,11 @@ No external Python packages are needed.
 After cloning the repository, open a terminal inside the project folder.
 
 ```text
-git clone YOUR_GITHUB_REPOSITORY_LINK
+git clone https://github.com/arkshankar/intelligent-travel-planner
 cd intelligent-travel-planner
 ```
 
-Replace `YOUR_GITHUB_REPOSITORY_LINK` with the repository link.
+Replace `https://github.com/arkshankar/intelligent-travel-planner` with the repository link.
 
 ## Run the desktop app
 

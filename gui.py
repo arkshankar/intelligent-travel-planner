@@ -41,8 +41,8 @@ class TravelPlannerApp(tk.Tk):
         self.kb = knowledge_base or TravelKnowledgeBase()
         self.last_itinerary = None
         self.title("Intelligent Travel Planning Agent")
-        self.geometry("1120x720")
-        self.minsize(920, 620)
+        self.geometry("1180x760")
+        self.minsize(980, 580)
         self.configure(bg=self.COLORS["page"])
         self._configure_styles()
         self._create_variables()
@@ -88,7 +88,7 @@ class TravelPlannerApp(tk.Tk):
         self.columnconfigure(1, weight=1)
         self.rowconfigure(1, weight=1)
 
-        header = tk.Frame(self, bg=self.COLORS["navy"], padx=24, pady=18)
+        header = tk.Frame(self, bg=self.COLORS["navy"], padx=20, pady=12)
         header.grid(row=0, column=0, columnspan=2, sticky="ew")
         header.columnconfigure(0, weight=1)
         title_block = tk.Frame(header, bg=self.COLORS["navy"])
@@ -96,25 +96,58 @@ class TravelPlannerApp(tk.Tk):
         tk.Label(
             title_block,
             text="Intelligent Travel Planning Agent",
-            font=("Segoe UI", 21, "bold"),
+            font=("Segoe UI", 18, "bold"),
             fg="white",
             bg=self.COLORS["navy"],
         ).pack(anchor="w")
         tk.Label(
             title_block,
             text="Semester project | Knowledge base + search algorithms + explainable planning",
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 9),
             fg="#d8e8f2",
             bg=self.COLORS["navy"],
-        ).pack(anchor="w", pady=(4, 0))
+        ).pack(anchor="w", pady=(2, 0))
         ttk.Button(header, text="About project", command=self.show_about).grid(row=0, column=1, sticky="e")
 
-        input_panel = ttk.LabelFrame(self, text="Trip details", padding=16)
-        input_panel.grid(row=1, column=0, sticky="ns", padx=(16, 8), pady=16)
+        # Scrollable container for the left inputs
+        left_container = ttk.Frame(self)
+        left_container.grid(row=1, column=0, sticky="nsew", padx=(14, 6), pady=(8, 12))
+        left_container.rowconfigure(0, weight=1)
+        left_container.columnconfigure(0, weight=1)
+
+        input_canvas = tk.Canvas(left_container, bg=self.COLORS["page"], highlightthickness=0, borderwidth=0)
+        input_scrollbar = ttk.Scrollbar(left_container, orient="vertical", command=input_canvas.yview)
+        input_canvas.configure(yscrollcommand=input_scrollbar.set)
+
+        input_panel = ttk.LabelFrame(input_canvas, text="Trip details", padding=12)
+        panel_window = input_canvas.create_window((0, 0), window=input_panel, anchor="nw")
+
+        def _on_panel_configure(event):
+            input_canvas.configure(scrollregion=input_canvas.bbox("all"))
+
+        def _on_canvas_configure(event):
+            input_canvas.itemconfig(panel_window, width=event.width)
+
+        input_panel.bind("<Configure>", _on_panel_configure)
+        input_canvas.bind("<Configure>", _on_canvas_configure)
+
+        def _on_mousewheel(event):
+            # Support mouse scrolling over input pane
+            if event.delta:
+                input_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            elif event.num == 4:
+                input_canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                input_canvas.yview_scroll(1, "units")
+
+        input_canvas.bind_all("<MouseWheel>", lambda e: self._handle_scroll(e, input_canvas), add="+")
+
+        input_canvas.grid(row=0, column=0, sticky="nsew")
+        input_scrollbar.grid(row=0, column=1, sticky="ns")
         input_panel.columnconfigure(1, weight=1)
 
         row = 0
-        ttk.Label(input_panel, text="Starting city").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(input_panel, text="Starting city").grid(row=row, column=0, sticky="w", pady=4)
         self.origin_combo = ttk.Combobox(
             input_panel,
             textvariable=self.origin_var,
@@ -122,17 +155,17 @@ class TravelPlannerApp(tk.Tk):
             state="readonly",
             width=23,
         )
-        self.origin_combo.grid(row=row, column=1, sticky="ew", pady=6)
+        self.origin_combo.grid(row=row, column=1, sticky="ew", pady=4)
 
         row += 1
-        ttk.Label(input_panel, text="Destinations").grid(row=row, column=0, sticky="nw", pady=6)
+        ttk.Label(input_panel, text="Destinations").grid(row=row, column=0, sticky="nw", pady=4)
         destination_frame = ttk.Frame(input_panel)
-        destination_frame.grid(row=row, column=1, sticky="ew", pady=6)
+        destination_frame.grid(row=row, column=1, sticky="ew", pady=4)
         destination_frame.columnconfigure(0, weight=1)
         self.destination_list = tk.Listbox(
             destination_frame,
             selectmode=tk.MULTIPLE,
-            height=6,
+            height=4,
             exportselection=False,
             relief="solid",
             borderwidth=1,
@@ -149,33 +182,33 @@ class TravelPlannerApp(tk.Tk):
             destination_frame,
             textvariable=self.destination_count_var,
             style="Muted.TLabel",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
 
         row += 1
-        ttk.Label(input_panel, text="Budget (INR)").grid(row=row, column=0, sticky="w", pady=6)
-        ttk.Entry(input_panel, textvariable=self.budget_var, width=25).grid(row=row, column=1, sticky="ew", pady=6)
+        ttk.Label(input_panel, text="Budget (INR)").grid(row=row, column=0, sticky="w", pady=4)
+        ttk.Entry(input_panel, textvariable=self.budget_var, width=25).grid(row=row, column=1, sticky="ew", pady=4)
 
         row += 1
-        ttk.Label(input_panel, text="Duration (days)").grid(row=row, column=0, sticky="w", pady=6)
-        ttk.Entry(input_panel, textvariable=self.days_var, width=25).grid(row=row, column=1, sticky="ew", pady=6)
+        ttk.Label(input_panel, text="Duration (days)").grid(row=row, column=0, sticky="w", pady=4)
+        ttk.Entry(input_panel, textvariable=self.days_var, width=25).grid(row=row, column=1, sticky="ew", pady=4)
 
         row += 1
-        ttk.Label(input_panel, text="Travelers").grid(row=row, column=0, sticky="w", pady=6)
-        ttk.Entry(input_panel, textvariable=self.travelers_var, width=25).grid(row=row, column=1, sticky="ew", pady=6)
+        ttk.Label(input_panel, text="Travelers").grid(row=row, column=0, sticky="w", pady=4)
+        ttk.Entry(input_panel, textvariable=self.travelers_var, width=25).grid(row=row, column=1, sticky="ew", pady=4)
 
         row += 1
-        ttk.Label(input_panel, text="Interests").grid(row=row, column=0, sticky="nw", pady=6)
+        ttk.Label(input_panel, text="Interests").grid(row=row, column=0, sticky="nw", pady=4)
         interests_frame = ttk.Frame(input_panel)
-        interests_frame.grid(row=row, column=1, sticky="w", pady=4)
+        interests_frame.grid(row=row, column=1, sticky="w", pady=2)
         for index, interest in enumerate(self.INTERESTS):
             ttk.Checkbutton(
                 interests_frame,
                 text=interest.title(),
                 variable=self.interest_vars[interest],
-            ).grid(row=index // 2, column=index % 2, sticky="w", padx=(0, 12), pady=2)
+            ).grid(row=index // 2, column=index % 2, sticky="w", padx=(0, 10), pady=1)
 
         row += 1
-        ttk.Label(input_panel, text="Agent type").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(input_panel, text="Agent type").grid(row=row, column=0, sticky="w", pady=4)
         self.agent_combo = ttk.Combobox(
             input_panel,
             textvariable=self.agent_var,
@@ -183,10 +216,10 @@ class TravelPlannerApp(tk.Tk):
             state="readonly",
             width=23,
         )
-        self.agent_combo.grid(row=row, column=1, sticky="ew", pady=6)
+        self.agent_combo.grid(row=row, column=1, sticky="ew", pady=4)
 
         row += 1
-        ttk.Label(input_panel, text="Route algorithm").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(input_panel, text="Route algorithm").grid(row=row, column=0, sticky="w", pady=4)
         self.algorithm_combo = ttk.Combobox(
             input_panel,
             textvariable=self.algorithm_var,
@@ -194,18 +227,18 @@ class TravelPlannerApp(tk.Tk):
             state="readonly",
             width=23,
         )
-        self.algorithm_combo.grid(row=row, column=1, sticky="ew", pady=6)
+        self.algorithm_combo.grid(row=row, column=1, sticky="ew", pady=4)
         self.algorithm_combo.bind("<<ComboboxSelected>>", self._update_algorithm_info)
         ttk.Label(
             input_panel,
             textvariable=self.algorithm_info_var,
             style="Muted.TLabel",
             wraplength=245,
-        ).grid(row=row + 1, column=1, sticky="w", pady=(0, 4))
+        ).grid(row=row + 1, column=1, sticky="w", pady=(0, 2))
 
         row += 2
         buttons = ttk.Frame(input_panel)
-        buttons.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(18, 4))
+        buttons.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(10, 4))
         for column in range(3):
             buttons.columnconfigure(column, weight=1)
         ttk.Button(buttons, text="Generate Itinerary", style="Accent.TButton", command=self.generate_itinerary).grid(row=0, column=0, sticky="ew", padx=(0, 3))
@@ -213,10 +246,10 @@ class TravelPlannerApp(tk.Tk):
         ttk.Button(buttons, text="Clear", command=self.clear_form).grid(row=0, column=2, sticky="ew", padx=(3, 0))
 
         row += 1
-        ttk.Button(input_panel, text="View Knowledge Base", command=self.show_knowledge_base).grid(row=row, column=0, columnspan=2, sticky="ew", pady=4)
+        ttk.Button(input_panel, text="View Knowledge Base", command=self.show_knowledge_base).grid(row=row, column=0, columnspan=2, sticky="ew", pady=3)
 
         output_panel = ttk.LabelFrame(self, text="Generated itinerary", padding=12)
-        output_panel.grid(row=1, column=1, sticky="nsew", padx=(8, 16), pady=16)
+        output_panel.grid(row=1, column=1, sticky="nsew", padx=(6, 14), pady=(8, 12))
         output_panel.rowconfigure(1, weight=1)
         output_panel.columnconfigure(0, weight=1)
 
@@ -255,6 +288,24 @@ class TravelPlannerApp(tk.Tk):
 
         status = ttk.Label(self, textvariable=self.status_var, relief="sunken", anchor="w", padding=(10, 5))
         status.grid(row=2, column=0, columnspan=2, sticky="ew")
+
+    def _handle_scroll(self, event, canvas: tk.Canvas) -> None:
+        # Only scroll the input canvas if the mouse is currently hovering over it or its children
+        x, y = self.winfo_pointerxy()
+        widget_under_mouse = self.winfo_containing(x, y)
+        if widget_under_mouse is not None:
+            # Check if mouse is over the left panel / canvas
+            cur = widget_under_mouse
+            while cur is not None:
+                if cur == canvas:
+                    if event.delta:
+                        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+                    elif event.num == 4:
+                        canvas.yview_scroll(-1, "units")
+                    elif event.num == 5:
+                        canvas.yview_scroll(1, "units")
+                    break
+                cur = getattr(cur, "master", None)
 
     def _create_metric(self, parent: ttk.Frame, column: int, title: str, variable: tk.StringVar) -> None:
         card = tk.Frame(

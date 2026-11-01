@@ -493,8 +493,10 @@ class TravelPlannerApp(tk.Tk):
         scroll.grid(row=0, column=1, sticky="ns")
         text.configure(yscrollcommand=scroll.set)
         lines = ["CITIES AND KNOWLEDGE BASE FACTS", "=" * 34]
+        lines.append(f"Coverage: {len(self.kb.cities)} destinations across all Indian States and Union Territories\n")
         for city in sorted(self.kb.cities.values(), key=lambda item: item.name):
-            lines.append(f"\n{city.name} ({city.country})")
+            state_info = f", {city.state}" if getattr(city, "state", "") else ""
+            lines.append(f"\n{city.name} ({city.country}{state_info})")
             lines.append("  Attractions: " + ", ".join(f"{item.name} [{item.category}]" for item in city.attractions))
             lines.append("  Hotels: " + ", ".join(f"{item.name} INR {item.nightly_cost:g}/night" for item in city.hotels))
             lines.append("  Connections: " + ", ".join(f"{item.destination} by {item.mode}, {item.hours:g}h, INR {item.cost:g}" for item in self.kb.neighbors(city.name)))

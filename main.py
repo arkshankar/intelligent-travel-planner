@@ -28,8 +28,10 @@ def parse_args() -> argparse.Namespace:
 def show_knowledge_base(kb: TravelKnowledgeBase) -> None:
     print("CITIES AND KNOWLEDGE BASE FACTS")
     print("=" * 34)
+    print(f"Coverage: {len(kb.cities)} destinations across all Indian States and Union Territories\n")
     for city in sorted(kb.cities.values(), key=lambda item: item.name):
-        print(f"\n{city.name} ({city.country})")
+        state_info = f", {city.state}" if getattr(city, "state", "") else ""
+        print(f"\n{city.name} ({city.country}{state_info})")
         print("  Attractions:", ", ".join(f"{item.name} [{item.category}]" for item in city.attractions))
         print("  Hotels:", ", ".join(f"{item.name} INR {item.nightly_cost:g}/night" for item in city.hotels))
         print("  Connections:", ", ".join(f"{item.destination} by {item.mode}" for item in kb.neighbors(city.name)))
